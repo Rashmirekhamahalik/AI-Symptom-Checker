@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MediSense AI | Symptom Checker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 10% 30%, rgba(15, 25, 55, 0.95), rgba(8, 12, 28, 0.98)), 
+                        repeating-linear-gradient(45deg, rgba(70, 130, 200, 0.02) 0px, rgba(70, 130, 200, 0.02) 2px, transparent 2px, transparent 8px);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            backdrop-filter: blur(2px);
+        }
+
+        /* main glass card */
+        .ai-card {
+            max-width: 560px;
+            width: 100%;
+            background: rgba(20, 28, 45, 0.65);
+            backdrop-filter: blur(16px);
+            border-radius: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* header with gradient accent */
+        .card-header {
+            padding: 2rem 2rem 1rem 2rem;
+            background: linear-gradient(135deg, rgba(66, 153, 225, 0.2), rgba(0, 210, 200, 0.1));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 212, 200, 0.18);
+            backdrop-filter: blur(4px);
+            padding: 0.3rem 1rem;
+            border-radius: 60px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: #abe2ff;
+            border: 0.5px solid rgba(0, 255, 255, 0.3);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #FFFFFF, #b8e1fc, #7bc5e6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.4rem;
+        }
+
+        .sub {
+            color: #b5c9f0;
+            font-size: 0.85rem;
+            font-weight: 450;
+            opacity: 0.9;
+        }
+
+        /* main content */
+        .card-body {
+            padding: 2rem 2rem 1.8rem;
+        }
+
+        /* input group - modern floating style */
+        .input-group {
+            margin-bottom: 2rem;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 500;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+            color: #cdddff;
+            margin-bottom: 0.7rem;
+        }
+
+        .symptom-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(12, 18, 32, 0.7);
+            border: 1.5px solid rgba(80, 140, 210, 0.5);
+            border-radius: 2rem;
+            padding: 1rem 1.4rem;
+            font-family: 'Inter', monospace;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #f0f6ff;
+            resize: vertical;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(4px);
+            outline: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea:focus {
+            border-color: #3bc9db;
+            box-shadow: 0 0 0 3px rgba(59, 201, 219, 0.3);
+            background: rgba(18, 25, 45, 0.85);
+        }
+
+        textarea::placeholder {
+            color: #96abda;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        /* animated button */
+        .check-btn {
+            background: linear-gradient(105deg, #1f6e8c, #2c7da0, #3b9bc0);
+            border: none;
+            width: 100%;
+            padding: 0.9rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            border-radius: 2.5rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 18px rgba(0, 30, 60, 0.4);
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(5px);
+            margin-bottom: 1.6rem;
+        }
+
+        .check-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(105deg, #2583aa, #358fb5, #4aaed4);
+            box-shadow: 0 14px 26px -8px rgba(0, 190, 200, 0.4);
+        }
+
+        .check-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* result card with smooth transition */
+        .result-section {
+            background: rgba(10, 16, 28, 0.65);
+            border-radius: 1.6rem;
+            padding: 1rem 1.2rem;
+            border-left: 4px solid #3bc9db;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            margin-top: 0.5rem;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #93c5fd;
+            margin-bottom: 0.75rem;
+        }
+
+        #result {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #eef5ff;
+            word-break: break-word;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .disease-tag {
+            background: linear-gradient(135deg, rgba(59, 201, 219, 0.2), rgba(33, 150, 243, 0.15));
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+            backdrop-filter: blur(2px);
+            border: 0.5px solid rgba(59, 201, 219, 0.5);
+        }
+
+        .empty-message {
+            color: #9ab3df;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .note {
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+            color: #8da3cf;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 0.6rem;
+            border-radius: 2rem;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .footer-credit {
+            text-align: center;
+            padding: 1rem 1rem 1.3rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.75rem;
+            color: #85a2d6;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            letter-spacing: 0.3px;
+        }
+
+        .signature {
+            font-weight: 500;
+            background: linear-gradient(120deg, #b7e0ff, #8ab9ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* loading spinner */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        /* glassmorphism extras */
+        @media (max-width: 520px) {
+            .ai-card {
+                border-radius: 2rem;
+            }
+            .card-body {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="ai-card">
+    <div class="card-header">
+        <div class="badge">
+            ✨ AI-Powered Health Assistant
+        </div>
+        <h1>MediSense AI</h1>
+        <div class="sub">intelligent symptom analysis · instant insights</div>
+    </div>
+
+    <div class="card-body">
+        <div class="input-group">
+            <div class="input-label">
+                <span>📋 Describe your symptoms</span>
+                <span style="font-size:0.7rem; opacity:0.7;">(e.g., fever, cough, fatigue)</span>
+            </div>
+            <div class="symptom-input-wrapper">
+                <textarea id="symptoms" rows="2" placeholder="Example: persistent headache, runny nose, mild fever ..."></textarea>
+            </div>
+        </div>
+
+        <button class="check-btn" id="checkButton">
+            <span>🔍</span> Analyze Symptoms
+        </button>
+
+        <div class="result-section">
+            <div class="result-header">
+                <span>🧬 DIAGNOSTIC REPORT</span>
+            </div>
+            <div id="result">
+                <span class="empty-message">✨ Waiting for your input — AI will predict possible condition</span>
+            </div>
+        </div>
+
+        <div class="note">
+            ⚕️ For informational use only · Not a replacement for professional medical advice
+        </div>
+    </div>
+
+    <div class="footer-credit">
+        <span>🌿 intelligent health companion</span>
+        <span>•</span>
+        <span class="signature">made by rashmirekha 2026</span>
+        <span>•</span>
+        <span>⚡ real-time AI prediction</span>
+    </div>
+</div>
+
+<script>
+    // ----- Aesthetic & fully functional UI for AI Symptom Checker -----
+    // Connects to backend API endpoint: http://127.0.0.1:8000/predict
+    // Handles loading states, errors, smooth updates, placeholder UI with credit "rashmirekha 2026"
+    
+    const symptomsTextarea = document.getElementById('symptoms');
+    const checkButton = document.getElementById('checkButton');
+    const resultContainer = document.getElementById('result');
+    
+    // helper to show loading state inside result area
+    function showLoadingState() {
+        resultContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="loader"></div>
+                <span style="color: #b8e2ff; font-weight:500;">Consulting AI model ...</span>
+            </div>
+        `;
+    }
+
+    // helper to display disease result with beautiful styling
+    function displayDisease(diseaseName) {
+        if (!diseaseName || diseaseName.trim() === "") {
+            resultContainer.innerHTML = `
+                <span class="empty-message">🤔 No clear prediction — please provide more symptom details</span>
+            `;
+            return;
+        }
+        // Sanitize & present
+        const formattedDisease = diseaseName.length > 60 ? diseaseName.slice(0, 60) + "…" : diseaseName;
+        resultContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span>🩺</span>
+                <span style="font-weight:500;">Possible condition:</span>
+                <span class="disease-tag">${escapeHtml(formattedDisease)}</span>
+            </div>
+            <div style="font-size:0.75rem; margin-top: 8px; color: #8ac4fe;">
+                recommendation: consult a healthcare provider for confirmation.
+            </div>
+        `;
+    }
+
+    // error display with graceful fallback
+    function displayError(errorMsg = "Unable to reach AI service") {
+        resultContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>⚠️</span>
+                <span style="color: #ffb4a2; font-weight:500;">${escapeHtml(errorMsg)}</span>
+            </div>
+            <div style="font-size:0.7rem; margin-top: 8px;">• check backend server (127.0.0.1:8000) • ensure /predict endpoint works</div>
+        `;
+    }
+
+    // simple XSS protection
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // main prediction function
+    async function performPrediction() {
+        let symptoms = symptomsTextarea.value.trim();
+        
+        // Edge: empty input handling -> show friendly advice
+        if (symptoms === "") {
+            resultContainer.innerHTML = `
+                <span class="empty-message">📝 Please describe your symptoms first (e.g., fever, chest pain).</span>
+            `;
+            return;
+        }
+        
+        // disable button and show loading (prevent multiple calls)
+        checkButton.disabled = true;
+        const originalBtnText = checkButton.innerHTML;
+        checkButton.innerHTML = `<span class="loader" style="border-top-color:white;"></span> Analyzing...`;
+        
+        showLoadingState();
+        
+        try {
+            // construct request to http://127.0.0.1:8000/predict
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+            
+            const response = await fetch("http://127.0.0.1:8000/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ text: symptoms }),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // handle HTTP error statuses
+            if (!response.ok) {
+                let errorDetail = `Server responded with ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    errorDetail = errData?.detail || errData?.message || errorDetail;
+                } catch(e) { /* ignore parsing error */ }
+                throw new Error(errorDetail);
+            }
+            
+            const data = await response.json();
+            
+            // backend response should have a 'disease' field (exactly as original)
+            if (data && typeof data === 'object' && 'disease' in data) {
+                let predictedDisease = data.disease;
+                if (predictedDisease && typeof predictedDisease === 'string') {
+                    displayDisease(predictedDisease);
+                } else if (predictedDisease) {
+                    displayDisease(String(predictedDisease));
+                } else {
+                    displayDisease("Undetermined condition — refine symptoms");
+                }
+            } else {
+                // fallback: if API returns something else but we try to be robust
+                if (data && data.prediction) {
+                    displayDisease(data.prediction);
+                } else {
+                    console.warn("Unexpected API response shape:", data);
+                    displayError("AI response format unrecognized");
+                }
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            let friendlyError = "Connection error. Make sure backend runs at http://127.0.0.1:8000";
+            if (error.name === 'AbortError') {
+                friendlyError = "Request timeout — backend took too long to respond.";
+            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                friendlyError = "Cannot reach AI engine. Verify backend server is active (127.0.0.1:8000).";
+            } else {
+                friendlyError = `Error: ${error.message}`;
+            }
+            displayError(friendlyError);
+        } finally {
+            // restore button state
+            checkButton.disabled = false;
+            checkButton.innerHTML = originalBtnText;
+        }
+    }
+    
+    // attach click event with smooth animation
+    checkButton.addEventListener('click', performPrediction);
+    
+    // optional: press Enter? for textarea we don't auto-submit to avoid accidental, but add nice ctrl+enter
+    symptomsTextarea.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            if (!checkButton.disabled) {
+                performPrediction();
+            }
+        }
+    });
+    
+    // small initial placeholder hint (optional)
+    if (symptomsTextarea.value === "") {
+        symptomsTextarea.placeholder = "Describe symptoms: e.g., 'high fever, dry cough, loss of taste'";
+    }
+    
+    // Demo note: For perfect local testing, backend should respond with {"disease": "Influenza"} etc.
+    // Additional aesthetic micro-interactions: focus glow, dynamic effect already in css.
+    // The signature "made by rashmirekha 2026" appears in footer and also enhanced overall elegance.
+    
+    // Preload subtle default if you want to showcase? No, keep clear.
+    // Optionally display "ready" indicator:
+    console.log("✨ AI Symptom Checker UI — ready to connect to backend @ port 8000 | designed by rashmirekha 2026");
+    
+    // Add hint tooltip for enter shortcut
+    const labelHint = document.querySelector('.input-label');
+    if (labelHint) {
+        const hintSpan = document.createElement('span');
+        hintSpan.style.marginLeft = 'auto';
+        hintSpan.style.fontSize = '0.65rem';
+        hintSpan.style.opacity = '0.7';
+        hintSpan.style.background = 'rgba(0,0,0,0.3)';
+        hintSpan.style.padding = '0.2rem 0.6rem';
+        hintSpan.style.borderRadius = '30px';
+        hintSpan.innerText = '⌘+Enter / Ctrl+Enter';
+        labelHint.appendChild(hintSpan);
+    }
+</script>
+</body>
+</html>
